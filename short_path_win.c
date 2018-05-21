@@ -10,6 +10,8 @@ char board[8][17];
 int b_row = 8;
 int b_column = 17;
 
+char cposition = ' ';
+
 
 /* Create player struct */
 typedef struct {
@@ -27,6 +29,9 @@ void clearScreen();
 void print_greeting(int star, char* name);
 void display_board();
 void print_score(player* thePlayer);
+void game_activity(player* thePlayer);
+void update_board();
+void print_result(player* thePlayer);
 
 int main() {
     // variables
@@ -40,7 +45,7 @@ int main() {
     // set default player
     player player1 = {
         "James",
-        100
+        0
     };
 
     // show title
@@ -55,10 +60,88 @@ int main() {
     clearScreen();
 
     display_board(b_row, b_column);
-    print_score(&player1);
+
+    game_activity(&player1);
     //board[0][0] = '4';
     //printf("%c\n", board[0][2]);
     return 0;
+}
+
+void game_activity(player* thePlayer) {
+    int continue_game = 1;
+    char input = ' ';
+    int x = 0;
+    int y = 2;
+    cposition = board[x][y];
+    thePlayer->score = cposition - '0';
+
+    while (continue_game == 1) {
+        print_score(thePlayer);
+        printf("Each number in the map represents the number of attractions along each street.\n");
+        printf("You may only move to the right or move down!\n\n");
+
+        printf("Press \'R\' to move right\n");
+        printf("Press \'D\' to move down\n");
+        printf("Press \'Q\' to quit\n");
+        printf("Please choose your next action:\n");
+        scanf("%c", &input);
+
+        if (input == 'Q') {
+            continue_game = 0; 
+        } else if (input == 'R') {
+            y = y + 4;
+            // append score
+            thePlayer->score += board[x][y] - '0';
+
+            // add line
+            board[x][y-1] = '|'; 
+            board[x][y+1] = '|'; 
+
+            // check end
+            if (x == 7 && y == 14) {
+                print_result(thePlayer);
+                return;
+            }
+        } else if (input == 'D') {
+           x = x + 1;
+           // append score
+           thePlayer->score += board[x][y] - '0';
+
+           // add line
+            board[x][y-1] = '|'; 
+            board[x][y+1] = '|'; 
+
+            // check end
+            if (x == 7 && y == 14) {
+                print_result(thePlayer);
+                return;
+            }
+        } else {
+           // do nothing 
+        }
+
+        clearScreen();
+        update_board();
+    }
+    
+}
+
+void print_result(player* thePlayer) {
+    printf("Congratulation! You have completed your tour!\n\n");
+    printf("Total attractions you have visited = %d\n\n", thePlayer->score);
+    printf("Thanks for playing!!! See you again ...");
+}
+
+void update_board() {
+    /* Display Board */
+	for(int row = 0;row<b_row;row++) {
+		for(int column = 0;column<b_column;column++) {
+			printf("%c", board[row][column]);
+		}
+		printf("\n");
+	}
+	
+	printf("\n");
 }
 
 void print_score(player* thePlayer) {
