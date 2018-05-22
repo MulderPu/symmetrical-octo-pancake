@@ -51,22 +51,59 @@ int main() {
     // show title
     print_title(number_of_star, title);
     print_record(record_star, record_title);
+
+    // read and show record
+    char buffer[1000];
+    FILE *pFile;
+
+    pFile = fopen("score.txt", "r");
+
+    if (pFile != NULL) {
+        while (fgets(buffer, 1000, pFile) != NULL) {
+            printf("%s", buffer);
+        }
+    } else {
+        pFile = fopen("score.txt", "w");
+    }
+
+    fclose(pFile);
+    printf("\n");
+    // end read
+
     // get player name
     getPlayerName();
     // set player name
     setPlayerName(&player1 , playerName);
     // greetings
     print_greeting(greeting_star, player1.name);
+    // clear screen
     clearScreen();
-
+    // display game board
     display_board(b_row, b_column);
-
+    // start game activity
     game_activity(&player1);
-    //board[0][0] = '4';
-    //printf("%c\n", board[0][2]);
+
+    // save game
+    FILE *f = fopen("score.txt", "a");
+    if (f == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    const char *name = player1.name;
+    const int score = player1.score;
+    fprintf(f, "\t %s\t\t\t%d\n", name, score);
+    fclose(f);
+    // end
+
     return 0;
 }
 
+/*
+ *  Game activity start here
+ *
+ *  params: struct player
+ * */
 void game_activity(player* thePlayer) {
     int continue_game = 1;
     char input = ' ';
@@ -74,6 +111,7 @@ void game_activity(player* thePlayer) {
     int y = 2;
     cposition = board[x][y];
     thePlayer->score = cposition - '0';
+    int quit = 0;
 
     while (continue_game == 1) {
         print_score(thePlayer);
@@ -86,52 +124,72 @@ void game_activity(player* thePlayer) {
         printf("Please choose your next action:\n");
         scanf("%c", &input);
 
-        if (input == 'Q') {
+        if (input == 'Q' || input == 'q') {
             continue_game = 0; 
-        } else if (input == 'R') {
+            quit = 1;
+            printf("Thank you! See you again ... \n");
+        } else if (input == 'R' || input == 'r') {
             y = y + 4;
-            // append score
-            thePlayer->score += board[x][y] - '0';
 
-            // add line
-            board[x][y-1] = '|'; 
-            board[x][y+1] = '|'; 
+            if (y < b_column) {
+                // append score
+                thePlayer->score += board[x][y] - '0';
 
-            // check end
-            if (x == 7 && y == 14) {
-                print_result(thePlayer);
-                return;
+                // add line
+                board[x][y-1] = '|'; 
+                board[x][y+1] = '|'; 
+
+                // check end
+                if (x == 7 && y == 14) {
+                    print_result(thePlayer);
+                    return;
+                }
+            } else {
+                y = y - 4;
             }
-        } else if (input == 'D') {
+        } else if (input == 'D' || input == 'd') {
            x = x + 1;
-           // append score
-           thePlayer->score += board[x][y] - '0';
+           if (x < b_row) {
+               // append score
+               thePlayer->score += board[x][y] - '0';
 
-           // add line
-            board[x][y-1] = '|'; 
-            board[x][y+1] = '|'; 
+               // add line
+               board[x][y-1] = '|'; 
+               board[x][y+1] = '|'; 
 
-            // check end
-            if (x == 7 && y == 14) {
-                print_result(thePlayer);
-                return;
-            }
+               // check end
+               if (x == 7 && y == 14) {
+                   print_result(thePlayer);
+                   return;
+               }
+           } else {
+               x = x - 1;
+           }
         } else {
            // do nothing 
         }
 
-        clearScreen();
-        update_board();
+        if (quit != 1) {
+            clearScreen();
+            update_board();
+        }
     }
     
 }
 
+/*
+ *  print result of the game
+ *  param: struct player
+ * */
 void print_result(player* thePlayer) {
     printf("Congratulation! You have completed your tour!\n\n");
     printf("Total attractions you have visited = %d\n\n", thePlayer->score);
     printf("Thanks for playing!!! See you again ...");
 }
 
+/*
+ *  update game board
+ * */
 void update_board() {
     /* Display Board */
 	for(int row = 0;row<b_row;row++) {
@@ -144,10 +202,17 @@ void update_board() {
 	printf("\n");
 }
 
+/*
+ *  print current score of the game
+ *  param: struct player
+ * */
 void print_score(player* thePlayer) {
     printf("Number of attraction visited so far: %d\n\n", thePlayer->score);
 }
 
+/*
+ *  init and display game board
+ * */
 void display_board() {
 	/* Insert values into Board */
     srand((unsigned)time(NULL));
@@ -187,6 +252,11 @@ void display_board() {
 	printf("\n");
 }
 
+/*
+ *  print greeting to player who plays
+ *  params: int star - number of star
+ *          char name - player name
+ * */
 void print_greeting(int star, char* name) {
     print_star(star);
     printf("Good day %s, let\'s start the game... all the best!!!", name);
@@ -195,31 +265,47 @@ void print_greeting(int star, char* name) {
     getchar();    
 }
 
+/*
+ *  Clear Screen
+ * */
 void clearScreen() {
     system("@cls||clear");
 }
 
+/*
+ *  Get player name
+ * */
 void getPlayerName() {
     printf("Please key in your name: ");
     scanf("%s", playerName);
 }
 
+/*
+ *  Set Player name
+ *  params: struct player, char newName
+ * */
 void setPlayerName(player *thePlayer, char* newName) {
     thePlayer->name = newName;
 }
 
+/*
+ *  print previous player record
+ *  params: int num - number of star
+ *          char title - title of the record
+ * */
 void print_record(int num, char* title) {
     print_star(num);
     printf("%s", title);
     print_star(num);
     printf("\n");
     printf("\t Name \t\t Score (Attractions visited)\n");
-
-    // score print here
-    printf("\t Fake_user \t\t 100\n");
-    printf("\n");
 }
 
+/*
+ *  print title
+ *  params: int num - number of the star
+ *          char title - title of the screen
+ * */
 void print_title(int num, char* title) {
     print_star(num);
     printf("%s", title);
@@ -227,6 +313,10 @@ void print_title(int num, char* title) {
     printf("\n");
 }
 
+/*
+ *  print star
+ *  param: int star - number of star
+ * */
 void print_star(int star) {
     for (int i = 0; i < star; i++) {
         printf("*");
